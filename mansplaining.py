@@ -1,3 +1,8 @@
+"""
+Author: Eliana Mugar
+"""
+
+#requires download of nltk in python
 import os
 import nltk
 
@@ -7,7 +12,8 @@ def main():
     giver_start = False
     save_index = 0
     male_female_count = 0
-    # establish text_file variable as fit1
+    # establish text_file variable as git1
+    # modify path for where files are on machine
     path = '''D:\EVL\Script Projects\Map Corpus\Map_Task_Processed\Fit_Files\git1'''
     for text_file in os.listdir(path):
         if '.txt' in text_file:
