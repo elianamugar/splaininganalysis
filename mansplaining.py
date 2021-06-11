@@ -38,10 +38,22 @@ def main():
                 raw = f.read()
                 tokens = nltk.word_tokenize(raw)
                 if giver_start:
-                    for line in tokens:
-                        line = line.strip("\n")
-                        words = line.split()
-                    print("lines: ", line, "words: ", words)
+                    line_count = 0
+                    beginning_line = False
+                    break
+                    # for line in raw:
+                    #     if line != "\n":
+                    #         line = line.strip("\n")
+                    #     beginning_line = True
+                    #     line_count += 1
+                    #     if beginning_line:
+                    #         if (line_count % 2) == 1:
+                    #         male_female_count += len(words)
+                    #         if line == "\n":
+                    #             beginning_line = False
+                        #line = line.strip("\n")
+                        #words = line.split()
+                    #print("lines: ", line, "words: ", words)
                 else:
                     print("not giver start test")
                 male_giver_check = False
