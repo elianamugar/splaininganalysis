@@ -1,80 +1,103 @@
 """
 Author: Eliana Mugar
+
+Analyze transcript files for speaker-role and gender-pattern markers.
+
+This script was designed for exploratory analysis of map-task transcript files.
+It scans transcript files for metadata markers indicating speaker gender and
+speaker role, then reports files matching a selected interaction pattern.
 """
 
-#requires download of nltk in python
-import os
+from pathlib import Path
+
 import nltk
 
-def main():
-    male_giver_check = False
-    female_follower_check = False
-    giver_start = False
-    save_index = 0
-    male_female_count = 0
-    # establish text_file variable as git1
-    # modify path for where files are on machine
-    path = '''D:\EVL\Script Projects\Map Corpus\Map_Task_Processed\Fit_Files\git1'''
-    for text_file in os.listdir(path):
-        if '.txt' in text_file:
-            my_file = os.path.join(path, text_file)
-            f = open(my_file, 'r+')
-            raw = f.read()
-            tokens = nltk.word_tokenize(raw)
-            for i in range(len(tokens)):
-                # find Giver
-                if tokens[i] == "male":
-                    male_giver_check = True
-                    for j in range(i, len(tokens)):
-                        if tokens[j] == "female":
-                            female_follower_check = True
-                if tokens[i] == "who=G" and tokens[i + 1] == "n=1":
-                        giver_start = True
-            if male_giver_check and female_follower_check:
-                print(text_file[:5])
-                currentpath = '''D:\EVL\Script Projects\Map Corpus\Map_Task_Processed\Fit_Files\git2'''
-                my_file = os.path.join(currentpath, text_file[:5] + "_fit2.txt")
-                f = open(my_file, 'r+')
-                raw = f.read()
-                tokens = nltk.word_tokenize(raw)
-                if giver_start:
-                    line_count = 0
-                    beginning_line = False
-                    break
-                    # for line in raw:
-                    #     if line != "\n":
-                    #         line = line.strip("\n")
-                    #     beginning_line = True
-                    #     line_count += 1
-                    #     if beginning_line:
-                    #         if (line_count % 2) == 1:
-                    #         male_female_count += len(words)
-                    #         if line == "\n":
-                    #             beginning_line = False
-                        #line = line.strip("\n")
-                        #words = line.split()
-                    #print("lines: ", line, "words: ", words)
-                else:
-                    print("not giver start test")
-                male_giver_check = False
-                female_follower_check = False
-                giver_start = False
 
-                # check corresponding fit2 file, and just count follower lines
-                # count the male giver word count
-                    # don't count info in the curly brackets
-                    # or strip files of curly brackets? er...
-                    # clear punctuation
-                # get average of male giver word count?
+def tokenize_file(file_path):
+    """Read and tokenize a transcript file."""
+    text = file_path.read_text(encoding="utf-8")
+    return nltk.word_tokenize(text)
 
 
-while True:
-    answer = input("Run the 'Mansplaining Analysis' program? (y/n): ")
-    if answer not in ('y', 'n'):
-        print("Invalid input.")
-        break
-    if answer == 'y':
-        main()
+def has_pattern(tokens):
+    """
+    Check whether a transcript contains the target exploratory pattern.
+
+    Current target pattern:
+    - A male speaker marker appears
+    - A female speaker marker appears later
+    - The giver role begins with markers: who=G n=1
+    """
+    found_male = False
+    found_female_after_male = False
+    giver_starts = False
+
+    for index, token in enumerate(tokens):
+        if token.lower() == "male":
+            found_male = True
+
+        if found_male and token.lower() == "female":
+            found_female_after_male = True
+
+        if (
+            token == "who=G"
+            and index + 1 < len(tokens)
+            and tokens[index + 1] == "n=1"
+        ):
+            giver_starts = True
+
+    return found_male and found_female_after_male and giver_starts
+
+
+def analyze_directory(input_dir):
+    """Analyze all .txt transcript files in a directory."""
+    matching_files = []
+
+    for file_path in sorted(input_dir.glob("*.txt")):
+        tokens = tokenize_file(file_path)
+
+        if has_pattern(tokens):
+            matching_files.append(file_path.name)
+
+    return matching_files
+
+
+def format_results(matching_files):
+    """Format analysis results."""
+    lines = [
+        "Splaining Analysis Results",
+        "==========================",
+        f"Matching files: {len(matching_files)}",
+        "",
+    ]
+
+    if matching_files:
+        lines.append("Files matching the target pattern:")
+        for file_name in matching_files:
+            lines.append(f"- {file_name}")
     else:
-        print("Goodbye.")
-        break
+        lines.append("No files matched the target pattern.")
+
+    return "\n".join(lines)
+
+
+def main():
+    """Run the transcript analysis workflow."""
+    input_dir = Path(input("Enter folder path containing transcript .txt files: ").strip())
+    output_file = Path(input("Enter output filename, e.g. splaining_results.txt: ").strip())
+
+    if not input_dir.exists() or not input_dir.is_dir():
+        print("Error: input folder does not exist.")
+        return
+
+    matching_files = analyze_directory(input_dir)
+    results = format_results(matching_files)
+
+    output_file.write_text(results, encoding="utf-8")
+
+    print(f"Found {len(matching_files)} matching files.")
+    print(f"Saved results to {output_file}")
+
+
+if __name__ == "__main__":
+    main()
